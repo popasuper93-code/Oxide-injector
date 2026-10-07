@@ -1,0 +1,55 @@
+name: Build Injector APK
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26b
+
+      - name: Prepare jni
+        run: |
+          mkdir -p jni
+          cp injector.cpp jni/
+          cp Android.mk jni/
+          cp Application.mk jni/
+          ls -la jni/
+
+      - name: Build native lib
+        run: |
+          cd jni
+          $ANDROID_NDK_HOME/ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=Android.mk NDK_APPLICATION_MK=Application.mk
+          echo "=== LIBS ==="
+          find . -name "*.so"
+
+      - name: Create APK structure
+        run: |
+          mkdir -p apk/lib/arm64-v8a
+          cp jni/libs/arm64-v8a/libinjector.so apk/lib/arm64-v8a/
+          ls -la apk/lib/arm64-v8a/
+
+      - name: Build APK with gradle
+        run: |
+          echo "APK structure ready"
+          find apk -type f
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: injector-apk
+          path: apk/
