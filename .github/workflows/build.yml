@@ -1,4 +1,4 @@
-name: Build Injector APK
+name: Build Injector
 
 on: [push, workflow_dispatch]
 
@@ -13,9 +13,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
 
       - name: Setup NDK
         uses: nttld/setup-ndk@v1
@@ -37,19 +34,8 @@ jobs:
           echo "=== LIBS ==="
           find . -name "*.so"
 
-      - name: Create APK structure
-        run: |
-          mkdir -p apk/lib/arm64-v8a
-          cp jni/libs/arm64-v8a/libinjector.so apk/lib/arm64-v8a/
-          ls -la apk/lib/arm64-v8a/
-
-      - name: Build APK with gradle
-        run: |
-          echo "APK structure ready"
-          find apk -type f
-
-      - name: Upload APK
+      - name: Upload .so
         uses: actions/upload-artifact@v4
         with:
-          name: injector-apk
-          path: apk/
+          name: libinjector
+          path: jni/libs/arm64-v8a/libinjector.so
